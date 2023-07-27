@@ -1,0 +1,27 @@
+[tool.poetry]
+name = "FleetSpeed"
+version = "0.1.0"
+description = ""
+authors = ["TorgeirBrenn <torgeir.brenn@gmail.com>"]
+readme = "README.md"
+
+[tool.poetry.dependencies]
+python = "^3.11"
+# fleet_speed = { file = "target/wheels/fleet_speed-0.1.0-cp311-cp311-macosx_11_0_arm64.whl"
+polars = "*"
+httpx = "*"
+python-dotenv = "*"
+aiohttp = "*"
+
+[tool.poetry.dev-dependencies]
+pytest = "*"
+pytest-mock = "*"
+pytest-asyncio = "*"
+pytest-cov = "*"
+maturin = "*"
+black = "*"
+isort = "*"
+
+[build-system]
+requires = ["maturin>=1.0,<2.0"]
+build-backend = "maturin"
