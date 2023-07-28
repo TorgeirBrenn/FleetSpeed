@@ -45,5 +45,5 @@ async def get_bw_stream(token) -> AsyncGenerator[str, None]:
             "GET", "https://live.ais.barentswatch.no/v1/ais", headers=headers
         ) as response:
             response.raise_for_status()
-            async for chunk in response.aiter_lines():
-                yield chunk
+            async for line in response.aiter_lines():
+                yield line

@@ -12,8 +12,8 @@ GET_NEW_TOKEN = True
 async def main():
     token = get_bw_token() if GET_NEW_TOKEN else os.environ["TOKEN"]
 
-    async for chunk in get_bw_stream(token):
-        print(chunk)
+    async for line in get_bw_stream(token):
+        print(line)
 
 
 if __name__ == "__main__":
