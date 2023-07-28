@@ -11,6 +11,8 @@ python = "^3.11"
 polars = "*"
 httpx = "*"
 python-dotenv = "*"
+pydantic = "*"
+rich = "*"
 
 [tool.poetry.dev-dependencies]
 pytest = "*"
