@@ -13,9 +13,9 @@ def dataframe_to_table(df: pl.DataFrame) -> Table:
     # column ordering is important
     df = df.select("mmsi", "speedOverGround", "msgtime")
 
-    table.add_column("Vessel MMSI", style="cyan")
-    table.add_column("Speed (kn)", style="bold red", justify="right")
-    table.add_column("Measured at", style="orange_red1")
+    table.add_column("Vessel MMSI", style="cyan", justify="center", width=12)
+    table.add_column("Speed (kn)", style="bold red", justify="right", width=12)
+    table.add_column("Measured at", style="orange_red1", justify="center", width=21)
 
     for row in df.iter_rows():
         table.add_row(*(str(itm) for itm in row))

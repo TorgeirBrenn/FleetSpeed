@@ -16,6 +16,11 @@ class VesselData(BaseModel):
     def cast_mmsi(cls, val: str | int) -> str:
         return str(val)
 
+    @field_validator("msgtime", mode="after")
+    @classmethod
+    def truncate_ms(cls, val: datetime) -> datetime:
+        return val.replace(microsecond=0)
+
 
 class VesselDataDict(TypedDict):
     mmsi: str
@@ -88,7 +93,10 @@ def add_batch_to_df(
 
     if num_batches is not None:
         max_batch_number = batch.select("batch_number").max().item()
-        df = df.filter(pl.col("batch_number") > max_batch_number - num_batches)
+
+        # If there is no data, then max_batch_number will be None and we have to allow that
+        if max_batch_number is not None:
+            df = df.filter(pl.col("batch_number") > max_batch_number - num_batches)
 
     return df
 
