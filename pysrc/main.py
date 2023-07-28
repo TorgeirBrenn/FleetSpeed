@@ -6,7 +6,7 @@ from streaming import get_bw_stream, get_bw_token
 
 dotenv.load_dotenv()
 
-GET_NEW_TOKEN = False
+GET_NEW_TOKEN = True
 
 
 async def main():

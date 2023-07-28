@@ -1,7 +1,6 @@
 import os
 from typing import AsyncGenerator
 
-import aiohttp
 import dotenv
 import httpx
 
@@ -33,11 +32,6 @@ def get_bw_token() -> str:
         raise ValueError(f"Unexpected response format '{response.text}'.")
 
 
-async def handle_chunks(response) -> AsyncGenerator[str, None]:
-    async for chunk in response.content.iter_any():
-        yield chunk.decode()
-
-
 async def get_bw_stream(token) -> AsyncGenerator[str, None]:
     auth_str = f"Bearer {token}"  # complete authorization string
 
@@ -46,12 +40,10 @@ async def get_bw_stream(token) -> AsyncGenerator[str, None]:
         "Authorization": auth_str,
     }
 
-    # Create a ClientSession with disabled SSL verification
-    conn = aiohttp.TCPConnector(ssl=False)
-
-    async with aiohttp.ClientSession(connector=conn) as session:
-        async with session.get(
-            "https://live.ais.barentswatch.no/v1/ais", headers=headers
+    async with httpx.AsyncClient() as client:
+        async with client.stream(
+            "GET", "https://live.ais.barentswatch.no/v1/ais", headers=headers
         ) as response:
-            async for chunk in handle_chunks(response):
+            response.raise_for_status()
+            async for chunk in response.aiter_lines():
                 yield chunk
