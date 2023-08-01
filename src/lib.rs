@@ -1,9 +1,20 @@
+use dotenv::dotenv;
 use reqwest;
 use serde::Deserialize;
 use serde_json;
-use dotenv::dotenv;
-use futures::stream;
+use futures::{stream, StreamExt};
+use tokio::time::{Duration, sleep};
+
+use std::collections::VecDeque;
 use std::pin::Pin;
+use std::sync::{Arc, Mutex};
+use std::time::{Instant};
+
+#[derive(Deserialize)]
+struct TokenResponse {
+    access_token: String,
+    // unused fields: expires_in, token_type, scope
+ }
 
 /**
  * This asynchronous function sends a POST request to the BarentsWatch token endpoint
@@ -23,12 +34,6 @@ use std::pin::Pin;
  * * `Err(Box<dyn std::error::Error>)`: In case of any failures (like network failure, unsuccessful status code, or invalid JSON),
  *    the function returns an error.
  */
-#[derive(Deserialize)]
-struct TokenResponse {
-    access_token: String,
-    // unused fields: expires_in, token_type, scope
- }
-
 pub async fn get_bw_token() -> Result<String, Box<dyn std::error::Error>> {
     dotenv().ok(); // Load .env variables
 
@@ -119,4 +124,56 @@ pub async fn get_bw_stream(token: String) -> Result<Pin<Box<dyn futures::Stream<
 
     // Return the stream as a boxed dynamic Stream trait object
     Ok(Box::pin(stream))
+}
+
+pub async fn process_stream_and_cache_data(
+    mut stream: Pin<Box<dyn futures::Stream<Item = Result<String, Box<dyn std::error::Error>>>>>,
+) -> Result<(), Box<dyn std::error::Error>> {
+    let start_time = Instant::now();
+    let data_queue: Arc<Mutex<VecDeque<(Duration, String)>>> = Arc::new(Mutex::new(VecDeque::new()));
+
+    // Create a background task that periodically aggregates data and prints result
+    let data_queue_clone = Arc::clone(&data_queue);
+        tokio::spawn(async move {
+            loop {
+                sleep(Duration::from_secs(2)).await;
+
+                // Remove entries older than 10 seconds
+                let now_duration = start_time.elapsed();
+                let ten_seconds = Duration::from_secs(10);
+
+                if let Ok(mut queue) = data_queue_clone.lock() {
+                    while let Some(&(timestamp, _)) = queue.front() {
+                        if now_duration > timestamp + ten_seconds {
+                            queue.pop_front();
+                        } else {
+                            break;
+                        }
+                    }
+
+                    // Placeholder for data processing
+                    let count = queue.len(); //count the number of items
+                    println!("Total items in the last 10 seconds: {}", count);
+                } else {
+                    eprintln!("Lock poisoned. Unable to clean up the queue.");
+                }
+            }
+        });
+
+    // Consume the stream and cache data
+    while let Some(chunk) = stream.next().await {
+        match chunk {
+            Ok(text) => {
+                // add the text and the timestamp to our queue
+                let elapsed = start_time.elapsed();
+                match data_queue.lock() {
+                    Ok(mut queue) => queue.push_back((elapsed, text.clone())),
+                    Err(e) => eprintln!("An error occurred while trying to lock the mutex: {}", e),
+                }
+            },
+            Err(e) => eprintln!("An error occurred while streaming: {}", e),
+        }
+    }
+
+    Ok(())
 }

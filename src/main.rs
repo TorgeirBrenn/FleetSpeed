@@ -1,7 +1,9 @@
 use tokio;
-use fleet_speed;
-use futures::StreamExt;
 // use dotenv::dotenv;
+
+use std::pin::Pin;
+
+use fleet_speed;
 
 /**
  * Main function that retrieves fleet speed token asynchronously and streams the speed data.
@@ -22,23 +24,18 @@ async fn main() {
     let token = fleet_speed::get_bw_token().await.unwrap();
 
     // uncomment lines below to instead use a token from .env to reduce number of API calls.
-
     // dotenv().ok(); // Load .env variables
     // let token = std::env::var("TOKEN").expect("env TOKEN must be set");
-
-    println!("{}", token);
 
     // Tries to asynchronously start the stream. Handles the result using match expression
     match fleet_speed::get_bw_stream(token).await {
         // If the stream starts without errors, it is processed in chunks.
-        Ok(mut stream) => {
-            while let Some(chunk) = stream.next().await {
-                match chunk {
-                    // If a chunk is successfully produced, it is printed to the standard output.
-                    Ok(text) => println!("{}", text),
-                    // If an error occurs while producing a chunk, the error message is printed to standard error.
-                    Err(e) => eprintln!("An error occurred while streaming: {}", e),
-                }
+        Ok(stream) => {
+            let stream: Pin<Box<dyn futures::Stream<Item = Result<String, Box<dyn std::error::Error>>>>> =
+                Box::pin(stream);
+
+            if let Err(e) = fleet_speed::process_stream_and_cache_data(stream).await {
+                eprintln!("An error occurred while processing the stream: {}", e);
             }
         },
         // If an error occurs while starting the stream, the error is printed to the standard error.
