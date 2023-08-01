@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "FleetSpeed"
-version = "0.1.0"
+version = "1.0.0"
 description = ""
 authors = ["TorgeirBrenn <torgeir.brenn@gmail.com>"]
 readme = "README.md"
@@ -13,6 +13,7 @@ httpx = "*"
 python-dotenv = "*"
 pydantic = "*"
 rich = "*"
+cachetools = "*"
 
 [tool.poetry.dev-dependencies]
 pytest = "*"
