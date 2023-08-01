@@ -50,6 +50,7 @@ def initialize_with_token(func):
 
     def wrapper_func(*args, **kwargs):
         print("Initializing FleetSpeed! Remember to always put safety first at sea.")
+        print("All data provided by Kystverket/BarentsWatch.")
         token = get_bw_token() if GET_NEW_TOKEN else os.environ["TOKEN"]
         return func(token, *args, **kwargs)
 
