@@ -23,6 +23,8 @@ pytest-cov = "*"
 maturin = "*"
 black = "*"
 isort = "*"
+pre-commit = "*"
+ruff = "*"
 
 [build-system]
 requires = ["maturin>=1.0,<2.0"]
